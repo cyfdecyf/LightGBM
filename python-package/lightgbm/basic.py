@@ -1554,11 +1554,14 @@ class Dataset:
         self.init_from_sample(sample_data, col_indices, sample_cnt, total_nrow)
 
         for seq in seqs:
-            nrow = len(seq)
-            batch_size = seq.batch_size or Sequence.batch_size
-            for start in range(0, nrow, batch_size):
-                end = min(start + batch_size, nrow)
-                self.push_rows(seq[start:end])
+            if (hasattr(seq, 'push') and seq.push and hasattr(seq, 'register_pusher') and callable(seq.register_pusher)):
+                seq.register_pusher(self.push_rows)
+            else:
+                nrow = len(seq)
+                batch_size = seq.batch_size or Sequence.batch_size
+                for start in range(0, nrow, batch_size):
+                    end = min(start + batch_size, nrow)
+                    self.push_rows(seq[start:end])
 
     def __init_from_np2d(self, mat, params_str, ref_dataset):
         """Initialize data from a 2-D numpy matrix."""
